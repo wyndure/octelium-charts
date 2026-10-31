@@ -1,0 +1,104 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ingress-dataplane-envoy-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "octelium.labels" . | nindent 4 }}
+data:
+  config: |
+    admin:
+      address:
+        socket_address:
+          address: 127.0.0.1
+          port_value: 11011
+    dynamic_resources:
+      lds_config:
+        resource_api_version: V3
+        api_config_source:
+          api_type: GRPC
+          transport_api_version: V3
+          grpc_services:
+            - envoy_grpc:
+                cluster_name: xds_cluster
+      cds_config:
+        resource_api_version: V3
+        api_config_source:
+          api_type: GRPC
+          transport_api_version: V3
+          grpc_services:
+            - envoy_grpc:
+                cluster_name: xds_cluster
+    node:
+      cluster: octelium
+      id: octelium-ingress
+    static_resources:
+      clusters:
+        {{- if .Values.spiffe.enabled }}
+        - name: spire_agent
+          type: STATIC
+          connect_timeout: 1s
+          load_assignment:
+            cluster_name: spire_agent
+            endpoints:
+              - lb_endpoints:
+                  - endpoint:
+                      address:
+                        pipe:
+                          path: {{ .Values.spiffe.socketPath | quote }}
+          typed_extension_protocol_options:
+            envoy.extensions.upstreams.http.v3.HttpProtocolOptions:
+              "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions
+              explicit_http_config:
+                http2_protocol_options: {}
+        {{- end }}
+        - name: xds_cluster
+          cluster_type:
+            name: envoy.clusters.dns
+            typed_config:
+              "@type": type.googleapis.com/envoy.extensions.clusters.dns.v3.DnsCluster
+          connect_timeout: 3s
+          lb_policy: ROUND_ROBIN
+          typed_extension_protocol_options:
+            envoy.extensions.upstreams.http.v3.HttpProtocolOptions:
+              "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions
+              explicit_http_config:
+                http2_protocol_options: {}
+          {{- if .Values.spiffe.enabled }}
+          transport_socket:
+            name: envoy.transport_sockets.tls
+            typed_config:
+              "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext
+              common_tls_context:
+                alpn_protocols: [h2]
+                tls_certificate_sds_secret_configs:
+                  - name: default
+                    sds_config:
+                      resource_api_version: V3
+                      api_config_source:
+                        api_type: GRPC
+                        transport_api_version: V3
+                        grpc_services:
+                          - envoy_grpc:
+                              cluster_name: spire_agent
+                validation_context_sds_secret_config:
+                  name: ROOTCA
+                  sds_config:
+                    resource_api_version: V3
+                    api_config_source:
+                      api_type: GRPC
+                      transport_api_version: V3
+                      grpc_services:
+                        - envoy_grpc:
+                            cluster_name: spire_agent
+          {{- end }}
+          load_assignment:
+            cluster_name: xds_cluster
+            endpoints:
+              - lb_endpoints:
+                  - endpoint:
+                      address:
+                        socket_address:
+                          address: {{ .Values.xds.host | quote }}
+                          port_value: {{ .Values.xds.port }}
+

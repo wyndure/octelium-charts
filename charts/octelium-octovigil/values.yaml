@@ -1,0 +1,55 @@
+resourceServer:
+  endpoint: octelium-rscserver-backend.octelium.svc.cluster.local
+  port: 8080
+  headless: true # Applies to IP endpoints; DNS endpoints use ExternalName.
+
+replicas: 1
+
+imagePullSecrets: []
+image:
+  repository: ghcr.io/octelium/octelium-octovigil
+  tag: ""
+  digest: ""
+  pullPolicy: IfNotPresent
+
+regionRef: # region ConfigMap reference
+  name: octelium-region
+
+nodeSelector: {}
+
+podLabels: {}
+podAnnotations: {}
+
+affinity: {}
+tolerations: []
+
+podSecurityContext: {}
+securityContext:
+  readOnlyRootFilesystem: true
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop: [ALL]
+
+extraInitContainers: []
+extraEnv: []
+extraEnvFrom: []
+extraVolumes: []
+extraVolumeMounts: []
+
+resources:
+  requests:
+    cpu: 10m
+    memory: 5Mi
+  limits:
+    cpu: 400m
+    memory: 384Mi
+
+spiffe:
+  enabled: false
+  csiDriver: csi.spiffe.io
+  trustDomain: ""
+  socketPath: ""
+
+networkPolicy:
+  enabled: true
+  clientNamespaceSelector: {} # Label-matched client pods may live in other namespaces.

@@ -1,0 +1,43 @@
+{{- if .Values.certificates.enabled -}}
+{{- $seen := dict -}}
+{{- range .Values.certificates.namespaces -}}
+{{- if hasKey $seen .name -}}{{- fail (printf "duplicate certificate namespace %s" .name) -}}{{- end -}}
+{{- $_ := set $seen .name true -}}
+{{- end -}}
+{{- $root := . -}}
+{{- $entries := list -}}
+{{- if .Values.certificates.cluster.enabled -}}
+{{- $dnsNames := .Values.certificates.cluster.dnsNames -}}
+{{- if empty $dnsNames -}}
+{{- $domain := required "certificates.cluster.domain is required to derive cluster Certificate DNS names" .Values.certificates.cluster.domain -}}
+{{- $dnsNames = list $domain (printf "*.%s" $domain) (printf "*.octelium.%s" $domain) (printf "*.octelium-api.%s" $domain) (printf "*.local.%s" $domain) (printf "*.default.%s" $domain) (printf "*.default.local.%s" $domain) (printf "*.octelium.local.%s" $domain) (printf "*.octelium-api.local.%s" $domain) -}}
+{{- end -}}
+{{- $entries = append $entries (dict "name" "cert-cluster" "dnsNames" $dnsNames) -}}
+{{- end -}}
+{{- range .Values.certificates.namespaces -}}
+{{- $entries = append $entries (dict "name" (printf "cert-ns-%s" .name) "dnsNames" .dnsNames) -}}
+{{- end -}}
+{{- range $entry := $entries }}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ $entry.name }}
+  namespace: octelium
+  labels:
+    {{- include "octelium.labels" $root | nindent 4 }}
+spec:
+  secretName: {{ $entry.name }}
+  issuerRef:
+    name: {{ required "certificates.issuerRef.name is required" $root.Values.certificates.issuerRef.name | quote }}
+    kind: {{ $root.Values.certificates.issuerRef.kind }}
+    group: {{ $root.Values.certificates.issuerRef.group }}
+  duration: {{ $root.Values.certificates.duration | quote }}
+  renewBefore: {{ $root.Values.certificates.renewBefore | quote }}
+  privateKey:
+    {{- toYaml $root.Values.certificates.privateKey | nindent 4 }}
+  dnsNames:
+    {{- toYaml (required "each Certificate needs dnsNames" $entry.dnsNames) | nindent 4 }}
+{{- end }}
+{{- end }}
+

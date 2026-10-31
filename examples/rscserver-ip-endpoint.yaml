@@ -1,0 +1,8 @@
+# For the same four consumer charts. An IP uses a headless Service and an
+# explicitly managed EndpointSlice. IPv6 literals are supported too.
+resourceServer:
+  endpoint: "192.0.2.10"
+  port: 8080
+  headless: true
+# Use headless: false to translate the fixed client port 8080 to another
+# resourceServer.port on an IP backend through a selectorless ClusterIP Service.

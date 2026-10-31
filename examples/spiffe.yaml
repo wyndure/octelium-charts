@@ -1,0 +1,5 @@
+# Can be merged into each component chart. Match existing ClusterConfig and SPIRE.
+spiffe:
+  enabled: true
+  csiDriver: csi.spiffe.io
+  socketPath: /run/spire/sockets/spire-agent.sock

@@ -1,0 +1,10 @@
+# For the octelium-nocturne chart only.
+regionRef:
+  name: octelium-region
+certificates:
+  cluster:
+    domain: access.example.com
+  enabled: true
+  issuerRef:
+    name: existing-dns01-issuer
+    kind: ClusterIssuer

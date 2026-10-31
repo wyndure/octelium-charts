@@ -1,0 +1,57 @@
+resourceServer:
+  endpoint: octelium-rscserver-backend.octelium.svc.cluster.local
+  port: 8080
+  headless: true # Applies to IP endpoints; DNS endpoints use ExternalName.
+
+imagePullSecrets: []
+image:
+  repository: ghcr.io/octelium/octelium-gwagent
+  tag: ""
+  digest: ""
+  pullPolicy: IfNotPresent
+
+regionRef: # region ConfigMap reference
+  name: octelium-region
+
+nodeSelector: {}
+
+podLabels: {}
+podAnnotations: {}
+
+affinity: {}
+tolerations: []
+
+podSecurityContext: {}
+securityContext:
+  readOnlyRootFilesystem: false
+  allowPrivilegeEscalation: false
+  runAsNonRoot: false
+  runAsUser: 0
+  capabilities:
+    drop: [ALL]
+    add: [NET_ADMIN, NET_RAW, MKNOD, NET_BIND_SERVICE]
+
+extraInitContainers: []
+extraEnv: []
+extraEnvFrom: []
+extraVolumes: []
+extraVolumeMounts: []
+
+resources:
+  requests:
+    cpu: 10m
+    memory: 5Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+spiffe:
+  enabled: false
+  csiDriver: csi.spiffe.io
+  trustDomain: ""
+  socketPath: ""
+
+multusHostConfDir: /etc/cni/multus/net.d
+
+rbac:
+  create: true

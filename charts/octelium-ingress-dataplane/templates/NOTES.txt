@@ -1,0 +1,2 @@
+Envoy is deployed in {{ .Release.Namespace }}.
+xDS endpoint: {{ .Values.xds.host }}:{{ .Values.xds.port }}.

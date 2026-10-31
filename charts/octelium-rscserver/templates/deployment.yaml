@@ -1,0 +1,124 @@
+{{- include "octelium.rscserver.validateInitializer" . -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: octelium-rscserver
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "octelium.labels" . | nindent 4 }}
+    {{- include "octelium.selectorLabels" "rscserver" | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicas }}
+  selector:
+    matchLabels:
+      {{- include "octelium.selectorLabels" "rscserver" | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "octelium.customLabels" (dict "root" . "component" "rscserver" "extra" .Values.podLabels) | nindent 8 }}
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      {{- with .Values.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{/* Explicit selection clears the API's legacy serviceAccount alias on upgrade. */}}
+      {{- if .Values.clusterConfigMap.name }}
+      serviceAccountName: octelium-rscserver-initializer
+      {{- else }}
+      serviceAccountName: default
+      {{- end }}
+      {{- if or .Values.initializer.enabled .Values.extraInitContainers }}
+      initContainers:
+        {{- with .Values.extraInitContainers }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- if .Values.initializer.enabled }}
+        {{- include "octelium.rscserver.initializer" . | nindent 8 }}
+        {{- end }}
+      {{- end }}
+      automountServiceAccountToken: false
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if or .Values.spiffe.enabled .Values.extraVolumes .Values.clusterConfigMap.name }}
+      volumes:
+        {{- if .Values.clusterConfigMap.name }}
+        - name: initializer-api-access
+          projected:
+            defaultMode: 420
+            sources:
+              - serviceAccountToken:
+                  path: token
+                  expirationSeconds: 3600
+              - configMap:
+                  name: kube-root-ca.crt
+                  items:
+                    - key: ca.crt
+                      path: ca.crt
+              - downwardAPI:
+                  items:
+                    - path: namespace
+                      fieldRef:
+                        fieldPath: metadata.namespace
+        {{- end }}
+        {{- if .Values.spiffe.enabled }}
+        {{- include "octelium.spiffeVolume" . | nindent 8 }}
+        {{- end }}
+        {{- with .Values.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- end }}
+      containers:
+        - name: rscserver
+          image: {{ include "octelium.image" (dict "root" . "image" .Values.image) | quote }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- with .Values.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          env:
+            {{- include "octelium.mergeEnv" (dict "base" (include "octelium.rscserver.env" . | fromYamlArray) "extra" .Values.extraEnv) | nindent 12 }}
+          {{- with .Values.extraEnvFrom }}
+          envFrom:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- if or .Values.spiffe.enabled .Values.extraVolumeMounts }}
+          volumeMounts:
+            {{- if .Values.spiffe.enabled }}
+            {{- include "octelium.spiffeMount" . | nindent 12 }}
+            {{- end }}
+            {{- with .Values.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          {{- end }}
+          startupProbe:
+            grpc: {port: 49090}
+            periodSeconds: 5
+            failureThreshold: 120
+          readinessProbe:
+            grpc: {port: 49090}
+            timeoutSeconds: 4
+          livenessProbe:
+            grpc: {port: 49090}
+            periodSeconds: 30
+            timeoutSeconds: 4
+

@@ -1,0 +1,8 @@
+# Apply in each namespace containing Go component workloads.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: octelium-region
+data:
+  name: default
+  uid: replace-with-existing-region-uid

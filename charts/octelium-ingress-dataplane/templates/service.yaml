@@ -1,0 +1,43 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: octelium-ingress-dataplane
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "octelium.customLabels" (dict "root" . "component" "ingress-dataplane" "extra" .Values.service.labels) | nindent 4 }}
+  {{- with .Values.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.service.type }}
+  {{- if has .Values.service.type (list "LoadBalancer" "NodePort") }}
+  externalTrafficPolicy: {{ .Values.service.externalTrafficPolicy }}
+  {{- end }}
+  {{- with .Values.service.externalIPs }}
+  externalIPs:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- if eq .Values.service.type "LoadBalancer" }}
+  {{- with .Values.service.loadBalancerClass }}
+  loadBalancerClass: {{ . | quote }}
+  {{- end }}
+  {{- with .Values.service.loadBalancerSourceRanges }}
+  loadBalancerSourceRanges:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- end }}
+  selector:
+    {{- include "octelium.selectorLabels" "ingress-dataplane" | nindent 4 }}
+  ports:
+    - name: main
+      protocol: TCP
+      port: {{ default (ternary 8080 443 .Values.frontProxy) .Values.service.port }}
+      targetPort: 8080
+      {{- if .Values.frontProxy }}
+      appProtocol: kubernetes.io/h2c
+      {{- end }}
+      {{- if and .Values.service.nodePort (has .Values.service.type (list "LoadBalancer" "NodePort")) }}
+      nodePort: {{ .Values.service.nodePort }}
+      {{- end }}
+

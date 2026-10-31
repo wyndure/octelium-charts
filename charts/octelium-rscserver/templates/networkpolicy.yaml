@@ -1,0 +1,23 @@
+{{- if eq .Values.networkPolicy.mode "cilium" }}
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: octelium-rscserver
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "octelium.labels" . | nindent 4 }}
+spec:
+  endpointSelector:
+    matchLabels:
+      {{- include "octelium.selectorLabels" "rscserver" | nindent 6 }}
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            app: octelium
+      fromEntities: [host, remote-node]
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP
+{{- end }}
+

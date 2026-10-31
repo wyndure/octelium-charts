@@ -1,0 +1,41 @@
+{{- if .Values.clusterConfigMap.name }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.clusterConfigMap.name | quote }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "octelium.labels" . | nindent 4 }}
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: octelium-rscserver-initializer
+  namespace: {{ .Release.Namespace }}
+automountServiceAccountToken: false
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: octelium-rscserver-initializer
+  namespace: {{ .Release.Namespace }}
+rules:
+  - apiGroups: [""]
+    resources: [configmaps]
+    resourceNames: [{{ .Values.clusterConfigMap.name | quote }}]
+    verbs: [patch]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: octelium-rscserver-initializer
+  namespace: {{ .Release.Namespace }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: octelium-rscserver-initializer
+subjects:
+  - kind: ServiceAccount
+    name: octelium-rscserver-initializer
+    namespace: {{ .Release.Namespace }}
+{{- end }}

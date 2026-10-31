@@ -1,0 +1,21 @@
+{{- if and (eq .Release.Namespace "octelium") (eq .Values.service.name "octelium-rscserver") -}}
+{{- fail "octelium/octelium-rscserver is reserved for consumer aliases; choose a different backend service.name." -}}
+{{- end -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ required "service.name is required" .Values.service.name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "octelium.labels" . | nindent 4 }}
+    {{- include "octelium.selectorLabels" "rscserver" | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    {{- include "octelium.selectorLabels" "rscserver" | nindent 4 }}
+  ports:
+    - name: grpc
+      protocol: TCP
+      port: 8080
+      targetPort: 8080
+

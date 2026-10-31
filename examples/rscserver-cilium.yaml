@@ -1,0 +1,3 @@
+# Optional overlay for the octelium-rscserver chart; requires Cilium policy APIs.
+networkPolicy:
+  mode: cilium

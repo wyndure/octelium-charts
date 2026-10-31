@@ -1,0 +1,12 @@
+/.tools/
+/.cache/
+/.venv/
+/dist/
+/.aws/
+/.codex/
+/.agents/
+.DS_Store
+__pycache__/
+*.pyc
+charts/*/charts/*.tgz
+/.ruff_cache/

@@ -1,0 +1,105 @@
+replicas: 1
+
+imagePullSecrets: []
+image:
+  repository: ghcr.io/octelium/octelium-rscserver
+  tag: ""
+  digest: ""
+  pullPolicy: IfNotPresent
+
+regionRef: # region ConfigMap reference
+  name: octelium-region
+
+nodeSelector: {}
+
+podLabels: {}
+podAnnotations: {}
+
+affinity: {}
+tolerations: []
+
+podSecurityContext: {}
+securityContext:
+  readOnlyRootFilesystem: true
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop: [ALL]
+
+extraInitContainers: []
+extraEnv: []
+extraEnvFrom: []
+extraVolumes: []
+extraVolumeMounts: []
+
+resources:
+  requests:
+    cpu: 10m
+    memory: 5Mi
+  limits:
+    cpu: 400m
+    memory: 384Mi
+
+spiffe:
+  enabled: false
+  csiDriver: csi.spiffe.io
+  trustDomain: ""
+  socketPath: ""
+
+postgresql:
+  host: ""
+  port: 5432
+  database: ""
+  tls: true
+  secretRef: # Credentials Secret in the resource server's namespace.
+    name: ""
+    usernameKey: username
+    passwordKey: postgres-password
+
+redis:
+  host: ""
+  port: 6379
+  database: 0
+  tls: true
+  secretRef:
+    name: ""
+    usernameKey: username
+    passwordKey: password
+
+networkPolicy:
+  mode: disabled # disabled | cilium; host-network clients must remain reachable.
+
+service:
+  name: octelium-rscserver-backend
+
+clusterConfigMap:
+  name: ""
+
+initializer:
+  enabled: true
+  domain: ""
+  image:
+    repository: ghcr.io/wyndure/octelium-initializer
+    tag: latest
+    digest: ""
+    pullPolicy: Always
+  timeout: 2m
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 65532
+    runAsGroup: 65532
+    readOnlyRootFilesystem: true
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop: [ALL]
+    seccompProfile:
+      type: RuntimeDefault
+  resources:
+    requests:
+      cpu: 10m
+      memory: 16Mi
+    limits:
+      cpu: 100m
+      memory: 128Mi
+  extraEnv: []
+  extraEnvFrom: []
+  extraVolumeMounts: []

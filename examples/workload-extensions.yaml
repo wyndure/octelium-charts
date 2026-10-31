@@ -1,0 +1,36 @@
+# Supported by every workload chart. Create the referenced ConfigMaps/Secrets first.
+podSecurityContext:
+  fsGroup: 34567
+securityContext:
+  seccompProfile:
+    type: RuntimeDefault
+extraInitContainers:
+  - name: prepare
+    image: busybox:1.37.0
+    command: [sh, -ec, "echo ready > /scratch/ready"]
+    securityContext:
+      runAsUser: 34567
+      runAsNonRoot: true
+      allowPrivilegeEscalation: false
+    volumeMounts:
+      - name: scratch
+        mountPath: /scratch
+extraVolumes:
+  - name: scratch
+    emptyDir: {}
+extraVolumeMounts:
+  - name: scratch
+    mountPath: /scratch
+extraEnv:
+  - name: EXAMPLE_SETTING
+    value: "value"
+  - name: EXAMPLE_SECRET
+    valueFrom:
+      secretKeyRef:
+        name: existing-secret
+        key: setting
+extraEnvFrom:
+  - configMapRef:
+      name: existing-config
+  - secretRef:
+      name: existing-secret

@@ -1,0 +1,110 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.14'
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+      - run: pip install --requirement requirements-dev.txt
+      - name: Install Helm
+        run: |
+          python -m ci.install_helm
+          echo "$GITHUB_WORKSPACE/.tools" >> "$GITHUB_PATH"
+      - name: Lint Python and Helm charts
+        run: |
+          python -m ruff check ci tests
+          python -m ruff format --check ci tests
+          python -m ci.lint_charts
+
+  package:
+    needs: lint
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.14'
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+      - run: pip install --requirement requirements-dev.txt
+      - name: Install Helm
+        run: |
+          python -m ci.install_helm
+          echo "$GITHUB_WORKSPACE/.tools" >> "$GITHUB_PATH"
+      - run: python -m ci.package_charts
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: helm-charts
+          path: dist/*.tgz
+          retention-days: 7
+          if-no-files-found: error
+
+  test:
+    needs: package
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.14'
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+      - run: pip install --requirement requirements-dev.txt
+      - name: Install Helm
+        run: |
+          python -m ci.install_helm
+          echo "$GITHUB_WORKSPACE/.tools" >> "$GITHUB_PATH"
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: helm-charts
+          path: dist
+      - run: python -m unittest discover -s tests -v
+
+  publish:
+    needs: [lint, package, test]
+    if: github.event_name == 'push' && (github.ref_type == 'tag' || github.ref_name == 'main' || github.ref_protected)
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+    concurrency:
+      group: publish-charts
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.14'
+      - name: Install Helm
+        run: |
+          python -m ci.install_helm
+          echo "$GITHUB_WORKSPACE/.tools" >> "$GITHUB_PATH"
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: helm-charts
+          path: dist
+      - name: Authenticate to GHCR
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: printf '%s' "$GHCR_TOKEN" | helm registry login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+      - run: python -m ci.publish_charts

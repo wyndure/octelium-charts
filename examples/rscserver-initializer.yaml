@@ -1,0 +1,10 @@
+# Merge with rscserver.yaml. Storage settings are shared with the resource server.
+initializer:
+  enabled: true
+  domain: access.example.com
+  image:
+    repository: ghcr.io/wyndure/octelium-initializer
+    tag: "" # Defaults to Chart.appVersion.
+  timeout: 2m
+clusterConfigMap:
+  name: octelium-cluster

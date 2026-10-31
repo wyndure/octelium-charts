@@ -1,0 +1,8 @@
+Resource server: {{ .Values.service.name }}.{{ .Release.Namespace }}.svc:8080
+{{- if .Values.initializer.enabled }}
+The initializer runs before the server and ensures ClusterConfig/default exists.
+{{- end }}
+{{- if .Values.clusterConfigMap.name }}
+ClusterConfig identity: ConfigMap {{ .Values.clusterConfigMap.name }} (keys: name, uid).
+{{- end }}
+Configure this backend through resourceServer in each consuming chart.

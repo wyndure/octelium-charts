@@ -1,0 +1,7 @@
+# Merge this same configuration into every resource-server consumer chart:
+# octelium-gwagent, octelium-nocturne, octelium-octovigil, octelium-ingress.
+# The existing octelium namespace contains their shared discovery alias.
+resourceServer:
+  endpoint: octelium-rscserver-backend.resource-servers.svc.cluster.local
+  port: 8080
+  headless: true

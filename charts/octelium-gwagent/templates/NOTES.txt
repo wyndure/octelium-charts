@@ -1,0 +1,4 @@
+Octelium gwagent is deployed in {{ .Release.Namespace }}.
+Resource-server backend: {{ .Values.resourceServer.endpoint }}:{{ .Values.resourceServer.port }}.
+Shared discovery address: octelium-rscserver.octelium.svc:8080.
+Keep resourceServer settings aligned across consumer releases.

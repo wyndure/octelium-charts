@@ -1,0 +1,8 @@
+.git/
+.DS_Store
+.aws/
+.codex/
+.agents/
+__pycache__/
+*.swp
+*.tmp

@@ -1,0 +1,62 @@
+replicas: 1
+
+imagePullSecrets: []
+image:
+  repository: docker.io/envoyproxy/envoy
+  tag: ""
+  digest: ""
+  pullPolicy: IfNotPresent
+
+nodeSelector: {}
+
+podLabels: {}
+podAnnotations: {}
+
+affinity: {}
+tolerations: []
+
+podSecurityContext: {}
+securityContext:
+  readOnlyRootFilesystem: true
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop: [ALL]
+  runAsNonRoot: true
+  runAsUser: 34567
+  runAsGroup: 34567
+
+extraInitContainers: []
+extraEnv: []
+extraEnvFrom: []
+extraVolumes: []
+extraVolumeMounts: []
+
+service:
+  type: LoadBalancer
+  labels: {}
+  annotations: {}
+  externalIPs: []
+  externalTrafficPolicy: Cluster
+  loadBalancerClass: ""
+  loadBalancerSourceRanges: []
+  port: 0 # Auto: 443 for native TLS; 8080 for frontProxy.
+  nodePort: 0
+
+resources:
+  requests:
+    cpu: 10m
+    memory: 5Mi
+  limits:
+    cpu: 400m
+    memory: 384Mi
+
+spiffe:
+  enabled: false
+  csiDriver: csi.spiffe.io
+  socketPath: /run/spire/sockets/spire-agent.sock
+
+xds:
+  host: octelium-ingress.octelium.svc.cluster.local
+  port: 8080
+
+frontProxy: false # Public TLS is terminated by an external proxy; match ClusterConfig.

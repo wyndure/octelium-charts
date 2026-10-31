@@ -1,0 +1,61 @@
+{{- if .Values.rbac.create }}
+{{- $roleName := printf "octelium-nocturne-%s" .Release.Namespace }}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: octelium-nocturne
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "octelium.labels" . | nindent 4 }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ $roleName }}
+  labels:
+    {{- include "octelium.labels" . | nindent 4 }}
+rules:
+  {{- toYaml .Values.rbac.rules | nindent 2 }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ $roleName }}
+  labels:
+    {{- include "octelium.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ $roleName }}
+subjects:
+  - kind: ServiceAccount
+    name: octelium-nocturne
+    namespace: {{ .Release.Namespace }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ $roleName }}
+  namespace: octelium
+  labels:
+    {{- include "octelium.labels" . | nindent 4 }}
+rules:
+  {{- toYaml .Values.rbac.workloadRules | nindent 2 }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ $roleName }}
+  namespace: octelium
+  labels:
+    {{- include "octelium.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ $roleName }}
+subjects:
+  - kind: ServiceAccount
+    name: octelium-nocturne
+    namespace: {{ .Release.Namespace }}
+{{- end }}
+

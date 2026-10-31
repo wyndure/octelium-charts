@@ -1,0 +1,105 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: octelium-gwagent
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "octelium.labels" . | nindent 4 }}
+    {{- include "octelium.selectorLabels" "gwagent" | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "octelium.selectorLabels" "gwagent" | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "octelium.customLabels" (dict "root" . "component" "gwagent" "extra" .Values.podLabels) | nindent 8 }}
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      {{- with .Values.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.extraInitContainers }}
+      initContainers:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: octelium-gwagent
+      automountServiceAccountToken: true
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      tolerations:
+        - key: octelium.com/gateway-init
+          operator: Exists
+          effect: NoSchedule
+        {{- with .Values.tolerations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+        - name: multus-conf
+          hostPath:
+            path: {{ .Values.multusHostConfDir | quote }}
+            type: DirectoryOrCreate
+        {{- if .Values.spiffe.enabled }}
+        {{- include "octelium.spiffeVolume" . | nindent 8 }}
+        {{- end }}
+        {{- with .Values.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      containers:
+        - name: gwagent
+          image: {{ include "octelium.image" (dict "root" . "image" .Values.image) | quote }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- with .Values.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          env:
+            {{- include "octelium.mergeEnv" (dict "base" (include "octelium.gwagent.env" . | fromYamlArray) "extra" .Values.extraEnv) | nindent 12 }}
+          {{- with .Values.extraEnvFrom }}
+          envFrom:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: multus-conf
+              mountPath: /host/multus-conf
+            - name: multus-conf
+              mountPath: /etc/cni/multus/net.d
+            {{- if .Values.spiffe.enabled }}
+            {{- include "octelium.spiffeMount" . | nindent 12 }}
+            {{- end }}
+            {{- with .Values.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          startupProbe:
+            exec:
+              command: [/bin/grpc_health_probe, -addr=localhost:10101]
+            periodSeconds: 5
+            failureThreshold: 120
+          readinessProbe:
+            exec:
+              command: [/bin/grpc_health_probe, -addr=localhost:10101]
+            timeoutSeconds: 4
+          livenessProbe:
+            exec:
+              command: [/bin/grpc_health_probe, -addr=localhost:10101]
+            periodSeconds: 30
+            timeoutSeconds: 4
+
