@@ -79,7 +79,7 @@ initializer:
   domain: ""
   image:
     repository: ghcr.io/wyndure/octelium-initializer
-    tag: latest
+    tag: "" # Defaults to Chart.appVersion.
     digest: ""
     pullPolicy: Always
   timeout: 2m

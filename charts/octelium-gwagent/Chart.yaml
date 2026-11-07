@@ -2,8 +2,8 @@ apiVersion: v2
 name: octelium-gwagent
 description: Independent Octelium gwagent component
 type: application
-version: 0.47.0
-appVersion: "0.47.0"
+version: 0.49.0
+appVersion: "0.49.0"
 kubeVersion: '>=1.27.0-0'
 home: https://octelium.com
 sources:
@@ -11,5 +11,5 @@ sources:
 - https://github.com/octelium/octelium
 dependencies:
 - name: octelium-common
-  version: 0.47.0
+  version: 0.49.0
   repository: file://../octelium-common

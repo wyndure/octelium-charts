@@ -161,13 +161,12 @@ class ChartsTest(unittest.TestCase):
             (ROOT / "charts/octelium-rscserver/Chart.yaml").read_text()
         )
         values = base_values("rscserver")
-        values["initializer"] = {"image": {"tag": ""}}
         init = pod_spec(helm("rscserver", values))["initContainers"][0]
         self.assertEqual(
             init["image"],
             "ghcr.io/wyndure/octelium-initializer:" + metadata["appVersion"],
         )
-        values["initializer"]["image"]["tag"] = "custom-build"
+        values["initializer"] = {"image": {"tag": "custom-build"}}
         init = pod_spec(helm("rscserver", values))["initContainers"][0]
         self.assertEqual(
             init["image"], "ghcr.io/wyndure/octelium-initializer:custom-build"

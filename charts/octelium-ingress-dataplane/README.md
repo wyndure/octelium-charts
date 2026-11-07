@@ -1,6 +1,6 @@
 # Octelium Ingress data plane
 
-Deploys Envoy, its bootstrap ConfigMap and the public Service. Uses Envoy v1.40.0.
+Deploys Envoy, its bootstrap ConfigMap and the public Service. Uses Envoy v1.40.2.
 
 ## Install
 
