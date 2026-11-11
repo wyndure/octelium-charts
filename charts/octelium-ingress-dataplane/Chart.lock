@@ -1,6 +1,6 @@
 dependencies:
 - name: octelium-common
   repository: file://../octelium-common
-  version: 0.49.0
-digest: sha256:add4fbee93a2504cb9b537313d5ade43774ad88cec8a542514ccfee4075b7918
-generated: "2026-11-07T10:03:58.341370295+01:00"
+  version: 0.50.0
+digest: sha256:f8d729d462b3231fb8dab0886a1c6af78a3d1c7b6fbd8a7e7bb5c1a808d557ef
+generated: "2026-11-09T17:52:42.961955587+01:00"

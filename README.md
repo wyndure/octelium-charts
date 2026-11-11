@@ -1,6 +1,6 @@
 # Octelium Helm charts
 
-Independent Helm charts for deploying Octelium components on Kubernetes. The Go component charts use Octelium v0.49.0; the ingress data plane uses Envoy v1.40.2. Chart version 0.49.0 includes the resource-server initializer by default.
+Independent Helm charts for deploying Octelium components on Kubernetes. The Go component charts use Octelium v0.50.0; the ingress data plane uses Envoy v1.40.2. Chart version 0.50.0 includes the resource-server initializer by default.
 
 | Chart | Purpose |
 | --- | --- |
@@ -17,7 +17,7 @@ Independent Helm charts for deploying Octelium components on Kubernetes. The Go 
 Use Helm 3.19 or later and Kubernetes 1.27 or later. Supply existing PostgreSQL and Redis services, their credentials, and the namespaces in which workloads will run.
 
 ```sh
-helm show chart oci://ghcr.io/wyndure/charts/octelium-rscserver --version 0.49.0
+helm show chart oci://ghcr.io/wyndure/charts/octelium-rscserver --version 0.50.0
 ```
 
 Create the upstream workload namespace:
@@ -55,7 +55,7 @@ Create a Region ConfigMap in each Go component's namespace. Its `name` key suppl
 Install the resource server:
 
 ```sh
-helm upgrade --install resource-server oci://ghcr.io/wyndure/charts/octelium-rscserver --version 0.49.0 \
+helm upgrade --install resource-server oci://ghcr.io/wyndure/charts/octelium-rscserver --version 0.50.0 \
   --namespace octelium --values values.yaml
 ```
 

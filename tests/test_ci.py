@@ -25,32 +25,32 @@ def event(
 class ReleasePolicyTest(unittest.TestCase):
     def test_versions_and_publication(self):
         for env, expected_version, eligible in [
-            ({}, "0.49.0", False),
-            (event(), "0.49.0-dev.123", True),
-            (event(name="release/next", protected="true"), "0.49.0-dev.123", True),
-            (event(name="feature"), "0.49.0-dev.123", False),
+            ({}, "0.50.0", False),
+            (event(), "0.50.0-dev.123", True),
+            (event(name="release/next", protected="true"), "0.50.0-dev.123", True),
+            (event(name="feature"), "0.50.0-dev.123", False),
             (event(ref_type="tag", name="v1.2.3"), "1.2.3", True),
             (event(ref_type="tag", name="1.2.3-rc.1"), "1.2.3-rc.1", True),
             (
                 event(event_name="pull_request", protected="true"),
-                "0.49.0-dev.123",
+                "0.50.0-dev.123",
                 False,
             ),
             (
                 event(ref_type="tag", name="v1.2.3", event_name="pull_request"),
-                "0.49.0-dev.123",
+                "0.50.0-dev.123",
                 False,
             ),
         ]:
             with self.subTest(env=env):
-                self.assertEqual(package_version("0.49.0", env), expected_version)
+                self.assertEqual(package_version("0.50.0", env), expected_version)
                 self.assertEqual(can_publish(env), eligible)
 
     def test_invalid_versions(self):
         for version in ["invalid", "1.2", "01.2.3", "1.2.3-dev.01", "1.2.3/path"]:
             with self.subTest(version=version):
                 with self.assertRaises(ValueError):
-                    package_version("0.49.0", event(ref_type="tag", name=version))
+                    package_version("0.50.0", event(ref_type="tag", name=version))
 
     @patch("ci.publish_charts.subprocess.run")
     def test_oci_upload(self, run):
